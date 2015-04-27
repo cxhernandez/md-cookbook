@@ -1,10 +1,14 @@
 #! /usr/bin/env python
+"""
+Solvate and equilibrate a protein simulation from a primary sequence.
+"""
 
 from __future__ import print_function
 
 import argparse
 import os
 
+from mdcookbook import __author__
 from mdcookbook.core import model_from_seq, solvate
 from mdcookbook.core import get_sim, get_ff, get_state, unpack_pose
 from mdcookbook.utils import timing, serializeObject
@@ -65,8 +69,9 @@ def run(seq, out, n_clones, temp, boxsize,
 
 def parse_cmdln():
     parser = argparse.ArgumentParser(
+        epilog="Written by %s" % __author__,
         description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-s', '--sequence', dest='seq',
                         help='String of single-letter amino acid codes.',
                         required=True)

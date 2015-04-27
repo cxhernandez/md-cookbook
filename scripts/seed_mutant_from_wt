@@ -6,6 +6,7 @@ from glob import iglob
 import argparse
 import os
 
+from mdcookbook import __author__
 from mdcookbook.core import model, solvate
 from mdcookbook.core import get_sim, get_ff, get_state, unpack_pose
 from mdcookbook.utils import timing, serializeObject
@@ -68,8 +69,9 @@ def run(pdb, mutpos, mut, n_clones, temp, boxsize,
 
 def parse_cmdln():
     parser = argparse.ArgumentParser(
+        epilog="Written by %s" % __author__,
         description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-f', '--input', dest='f',
                         help='Glob string to find PDB files.', required=True)
     parser.add_argument('-p', '--mut-position', dest='mutpos',
