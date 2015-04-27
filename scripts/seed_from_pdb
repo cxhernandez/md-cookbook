@@ -17,7 +17,6 @@ def run(pdb, n_clones, temp, boxsize,
         maxiter, n_steps, smolar, platform, device):
 
     dirname = basename(pdb)
-    ff = get_ff()
 
     if platform == "CUDA":
         props = {'CudaPrecision': 'mixed', 'CudaDeviceIndex': device}
@@ -26,8 +25,9 @@ def run(pdb, n_clones, temp, boxsize,
     else:
         props = {}
 
-    with timing('Parameterization'):
+    with timing('Load files'):
         pdb = PDBFile(pdb)
+        ff = get_ff()
 
     with timing('Solvation'):
         watbox = solvate(pdb.positions, pdb.topology, ff, smolar, boxsize)
