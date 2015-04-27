@@ -20,4 +20,4 @@ This is a small library of python scripts and modules that I use to start [Foldi
   
   Solvate and equilibrate a protein simulation from a primary sequence.*
 
-                                                                        * requires PyRosetta and ParmEd
+<p align="right">* requires PyRosetta and ParmEd</p>
