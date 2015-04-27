@@ -20,7 +20,7 @@ classifiers = """\
     Operating System :: MacOS
     Operating System :: Microsoft :: Windows
     Topic :: Scientific/Engineering
-    Topic :: Scientific/Engineering :: Information Analysis"""
+    Topic :: Scientific/Engineering :: Chemistry"""
 
 setup(
     name="mdcookbook",
