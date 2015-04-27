@@ -1,0 +1,124 @@
+#! /usr/bin/env python
+
+from __future__ import print_function
+
+try:
+    from rosetta import init
+    init()
+except ImportError:
+    raise ImportError('You need PyRosetta to use this script.')
+
+from glob import glob
+import argparse
+import os
+
+from mdcookbook.core import model, solvate
+from mdcookbook.core import get_sim, get_ff, get_state, unpack_pose
+from mdcookbook.utils import timing, serializeObject
+
+from simtk.openmm import Platform, Vec3
+from simtk.openmm.app import PDBReporter
+from os.path import basename
+
+
+def run(pdb, mutpos, mut, n_clones, temp, boxsize,
+        maxiter, n_steps, smolar, platform, device):
+
+    dirname = basename(pdb)
+    ff = get_ff()
+
+    if platform == "CUDA":
+        props = {'CudaPrecision': 'mixed', 'CudaDeviceIndex': device}
+    elif platform == "OpenCL":
+        props = {'OpenCLPrecision': 'mixed', 'OpenCLDeviceIndex': device}
+    else:
+        props = {}
+
+    platform = Platform.getPlatformByName(platform)
+
+    with timing('Modeling'):
+        pose = model(pdb, mutpos=mutpos, mut=mut)
+        positions, topology = unpack_pose(pose)
+
+    with timing('Solvation'):
+        watbox = solvate(positions, topology, ff, smolar, boxsize)
+
+    minimizer, _, _ = get_sim(watbox.positions, watbox.topology, temp,
+                              ff, Platform.getPlatformByName('CPU'), {})
+
+    with timing('Minimization'):
+        minimizer.minimizeEnergy(maxIterations=maxiter)
+
+    simulation, system, integrator = get_sim(
+        minimizer.context.getState(getPositions=True).getPositions(),
+        watbox.topology, temp, ff, platform, props)
+
+    if not os.path.exists('./solv_pdb/'):
+        os.makedirs('./solv_pdb/')
+
+    simulation.reporters.append(
+        PDBReporter('./solv_pdb/%s' % pdb, n_steps))
+
+    with timing('Equilibration'):
+        simulation.context.setVelocitiesToTemperature(temp)
+        simulation.step(n_steps)
+
+    with timing('Serialization'):
+        serializeObject(system, dirname, 'system.xml')
+        serializeObject(integrator, dirname, 'integrator.xml')
+        for i in xrange(n_clones):
+            serializeObject(get_state(simulation, temp),
+                            dirname, 'state%d.xml' % i)
+    print("Done!")
+
+
+def parse_cmdln():
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('-f', '--input', dest='f',
+                        help='Glob string to find PDB files.', required=True)
+    parser.add_argument('-p', '--mut-position', dest='mutpos',
+                        help='Position of desired mutation.', type=int,
+                        required=True)
+    parser.add_argument('-m', '--mutation', dest='mut',
+                        help='Rosetta residue string.', required=True)
+    parser.add_argument('-pt', '--platform', dest='platform',
+                        help='Platform type.', default="CPU")
+    parser.add_argument('-d', '--device-index', dest='device',
+                        help='GPU device index.', default=0, type=int)
+    parser.add_argument('-nc', '--n-clones', dest='n_clones',
+                        help='Number of clones to create.', default=5,
+                        type=int)
+    parser.add_argument('-n', '--n-steps', dest='n_steps',
+                        help='Number of equilibration steps.',
+                        default=50000, type=int)
+    parser.add_argument('-i', '--max-iterations', dest='maxiter',
+                        help='Max iterations for minimization.',
+                        default=1000, type=int)
+    parser.add_argument('-c', '--solvent-concentation', dest='smolar',
+                        help='Solvent concentration.',
+                        default=0.1, type=float)
+    parser.add_argument('-t', '--temperature', dest='temp',
+                        help='Simulation temperature (Kelvin).',
+                        default=300, type=int)
+    parser.add_argument('-b', '--box-size', dest='boxsize',
+                        help='Boxsize expressed as: Vec3(x, y, z).',
+                        default='Vec3(5, 5, 5)')
+    args = parser.parse_args()
+    return args
+
+
+if __name__ == "__main__":
+    options = parse_cmdln()
+    files = glob(options.f)
+
+    boxsize = None
+    eval('boxsize=%s' % options.boxsize)
+    if not isinstance(boxsize, Vec3):
+        raise TypeError('boxsize must be expressed as Vec3')
+
+    for f in files:
+        run(f, options.mutpos, options.mut, options.n_clones, options.temp,
+            boxsize, options.maxiter, options.n_steps, options.smolar,
+            options.platform, str(options.device))
