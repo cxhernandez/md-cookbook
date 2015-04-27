@@ -10,10 +10,10 @@ from mdcookbook.core import get_sim, get_ff, get_state
 from mdcookbook.utils import timing, serializeObject
 
 from simtk.openmm import Platform, Vec3
-from simtk.openmm.app import PDBReporter, PDBFile, AmberPrmtopFile
+from simtk.openmm.app import PDBReporter, PDBFile
 
 
-def run(pdb, prmtop, n_clones, temp, boxsize,
+def run(pdb, n_clones, temp, boxsize,
         maxiter, n_steps, smolar, platform, device):
 
     dirname = basename(pdb)
@@ -28,10 +28,9 @@ def run(pdb, prmtop, n_clones, temp, boxsize,
 
     with timing('Parameterization'):
         pdb = PDBFile(pdb)
-        prmtop = AmberPrmtopFile(prmtop)
 
     with timing('Solvation'):
-        watbox = solvate(pdb.positions, prmtop.topology, ff, smolar, boxsize)
+        watbox = solvate(pdb.positions, pdb.topology, ff, smolar, boxsize)
 
     minimizer, _, _ = get_sim(watbox.positions, watbox.topology, temp,
                               ff, Platform.getPlatformByName('CPU'), {})
@@ -67,12 +66,8 @@ def parse_cmdln():
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('-f', '--input', dest='s',
-                        help='Glob string to find structure files'
-                        ' (PDB or INPCRD).',
-                        required=True)
-    parser.add_argument('-p', '--prmtop', dest='top',
-                        help='Glob string to find PRMTOP files.',
+    parser.add_argument('-f', '--input', dest='pdb',
+                        help='Glob string to find PDB files.',
                         required=True)
     parser.add_argument('-pt', '--platform', dest='platform',
                         help='Platform type.', default="CPU")
@@ -102,21 +97,14 @@ def parse_cmdln():
 
 if __name__ == "__main__":
     options = parse_cmdln()
-    structures = glob(options.s)
-    topologies = glob(options.top)
-
-    if len(topologies) == 1:
-        topologies = len(structures)*topologies
-    elif len(topologies) != len(structures):
-        raise AssertionError("Number of topology files should be one or equal"
-                             "to the number of structures.")
+    structures = glob(options.pdb)
 
     boxsize = None
     eval('boxsize=%s' % options.boxsize)
     if not isinstance(boxsize, Vec3):
         raise TypeError('boxsize must be expressed as Vec3')
 
-    for t, p in zip(topologies, structures):
-        run(p, t, options.n_clones, options.temp,
+    for pdb in structures:
+        run(pdb, options.n_clones, options.temp,
             boxsize, options.maxiter, options.n_steps, options.smolar,
             options.platform, str(options.device))
