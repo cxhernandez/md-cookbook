@@ -3,7 +3,7 @@
 import argparse
 import os
 from os.path import basename
-from glob import glob
+from glob import iglob
 
 from mdcookbook.core import solvate
 from mdcookbook.core import get_sim, get_ff, get_state
@@ -97,7 +97,7 @@ def parse_cmdln():
 
 if __name__ == "__main__":
     options = parse_cmdln()
-    structures = glob(options.pdb)
+    structures = iglob(options.pdb)
 
     boxsize = None
     eval('boxsize=%s' % options.boxsize)

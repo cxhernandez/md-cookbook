@@ -2,7 +2,7 @@
 
 from __future__ import print_function
 
-from glob import glob
+from glob import iglob
 import argparse
 import os
 
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     except ImportError:
         raise ImportError('You need PyRosetta to use this script.')
 
-    files = glob(options.f)
+    files = iglob(options.f)
 
     boxsize = None
     eval('boxsize=%s' % options.boxsize)
