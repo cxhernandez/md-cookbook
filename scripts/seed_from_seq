@@ -2,23 +2,20 @@
 
 from __future__ import print_function
 
-from glob import glob
 import argparse
 import os
 
-from mdcookbook.core import model, solvate
+from mdcookbook.core import model_from_seq, solvate
 from mdcookbook.core import get_sim, get_ff, get_state, unpack_pose
 from mdcookbook.utils import timing, serializeObject
 
 from simtk.openmm import Platform, Vec3
 from simtk.openmm.app import PDBReporter
-from os.path import basename
 
 
-def run(pdb, mutpos, mut, n_clones, temp, boxsize,
+def run(seq, out, n_clones, temp, boxsize,
         maxiter, n_steps, smolar, platform, device):
 
-    dirname = basename(pdb)
     ff = get_ff()
 
     if platform == "CUDA":
@@ -31,7 +28,7 @@ def run(pdb, mutpos, mut, n_clones, temp, boxsize,
     platform = Platform.getPlatformByName(platform)
 
     with timing('Modeling'):
-        pose = model(pdb, mutpos=mutpos, mut=mut)
+        pose = model_from_seq(seq)
         positions, topology = unpack_pose(pose)
 
     with timing('Solvation'):
@@ -51,18 +48,18 @@ def run(pdb, mutpos, mut, n_clones, temp, boxsize,
         os.makedirs('./solv_pdb/')
 
     simulation.reporters.append(
-        PDBReporter('./solv_pdb/%s' % pdb, n_steps))
+        PDBReporter('./solv_pdb/%s' % out, n_steps))
 
     with timing('Equilibration'):
         simulation.context.setVelocitiesToTemperature(temp)
         simulation.step(n_steps)
 
     with timing('Serialization'):
-        serializeObject(system, dirname, 'system.xml')
-        serializeObject(integrator, dirname, 'integrator.xml')
+        serializeObject(system, out, 'system.xml')
+        serializeObject(integrator, out, 'integrator.xml')
         for i in xrange(n_clones):
             serializeObject(get_state(simulation, temp),
-                            dirname, 'state%d.xml' % i)
+                            out, 'state%d.xml' % i)
     print("Done!")
 
 
@@ -70,13 +67,12 @@ def parse_cmdln():
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('-f', '--input', dest='f',
-                        help='Glob string to find PDB files.', required=True)
-    parser.add_argument('-p', '--mut-position', dest='mutpos',
-                        help='Position of desired mutation.', type=int,
+    parser.add_argument('-s', '--sequence', dest='seq',
+                        help='String of single-letter amino acid codes.',
                         required=True)
-    parser.add_argument('-m', '--mutation', dest='mut',
-                        help='Rosetta residue string.', required=True)
+    parser.add_argument('-o', '--out', dest='out',
+                        help='Name of output directory and files.',
+                        required=True)
     parser.add_argument('-pt', '--platform', dest='platform',
                         help='Platform type.', default="CPU")
     parser.add_argument('-d', '--device-index', dest='device',
@@ -112,14 +108,11 @@ if __name__ == "__main__":
     except ImportError:
         raise ImportError('You need PyRosetta to use this script.')
 
-    files = glob(options.f)
-
     boxsize = None
     eval('boxsize=%s' % options.boxsize)
     if not isinstance(boxsize, Vec3):
         raise TypeError('boxsize must be expressed as Vec3')
 
-    for f in files:
-        run(f, options.mutpos, options.mut, options.n_clones, options.temp,
-            boxsize, options.maxiter, options.n_steps, options.smolar,
-            options.platform, str(options.device))
+    run(options.seq, options.out, options.n_clones, options.temp,
+        boxsize, options.maxiter, options.n_steps, options.smolar,
+        options.platform, str(options.device))
