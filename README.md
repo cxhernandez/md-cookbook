@@ -2,7 +2,9 @@
 
 ###intro:
 
-This is a small library of python scripts and modules that I use to start [Folding@home](http://folding.stanford.edu) simulations. All modeling is done with [PyRosetta](http://www.pyrosetta.org/) and [ParmEd](http://parmed.github.io/ParmEd/html/index.html), and all simulations are done with [OpenMM](http://openmm.org/). Enjoy!
+This is a small library of python scripts and modules that I use to start [Folding@home](http://folding.stanford.edu) simulations. All modeling is done with [PyRosetta](http://www.pyrosetta.org/) and [ParmEd](http://parmed.github.io/ParmEd/html/index.html), and all simulations are done with [OpenMM](http://openmm.org/).
+
+Enjoy!
 
 ---
 
