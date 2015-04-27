@@ -1,4 +1,5 @@
-"""md-cookbook: Get cooking with MD simulations!
+"""
+ md-cookbook: Get cookin' with MD simulations!
 
  md-cookbook is a python script library that allows users to easily
  setup molecular dynamics (MD) trajectories using OpenMM.

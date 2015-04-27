@@ -1,4 +1,7 @@
 #! /usr/bin/env python
+"""
+Use a PDB file to solvate, minimize, and equilibrate a simulation.
+"""
 
 import argparse
 import os

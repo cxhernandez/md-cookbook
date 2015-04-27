@@ -1,4 +1,8 @@
 #! /usr/bin/env python
+"""
+Mutate a single amino acid in an existing PDB and start a round of
+equilibration.
+"""
 
 from __future__ import print_function
 
