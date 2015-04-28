@@ -23,7 +23,7 @@ from os.path import basename
 def run(pdb, mutpos, mut, n_clones, temp, boxsize,
         maxiter, n_steps, smolar, platform, device):
 
-    dirname = basename(pdb)
+    name = basename(pdb).split('.')[0]
     ff = get_ff()
 
     if platform == "CUDA":
@@ -56,18 +56,18 @@ def run(pdb, mutpos, mut, n_clones, temp, boxsize,
         os.makedirs('./solv_pdb/')
 
     simulation.reporters.append(
-        PDBReporter('./solv_pdb/%s' % pdb, n_steps))
+        PDBReporter('./solv_pdb/%s.pdb' % name, n_steps))
 
     with timing('Equilibration'):
         simulation.context.setVelocitiesToTemperature(temp)
         simulation.step(n_steps)
 
     with timing('Serialization'):
-        serializeObject(system, dirname, 'system.xml')
-        serializeObject(integrator, dirname, 'integrator.xml')
+        serializeObject(system, name, 'system.xml')
+        serializeObject(integrator, name, 'integrator.xml')
         for i in xrange(n_clones):
             serializeObject(get_state(simulation, temp),
-                            dirname, 'state%d.xml' % i)
+                            name, 'state%d.xml' % i)
     print("Done!")
 
 

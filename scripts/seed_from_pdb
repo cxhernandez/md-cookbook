@@ -20,7 +20,7 @@ from simtk.openmm.app import PDBReporter, PDBFile
 def run(pdb, n_clones, temp, boxsize,
         maxiter, n_steps, smolar, platform, device):
 
-    dirname = basename(pdb)
+    name = basename(pdb).split('.')[0]
 
     if platform == "CUDA":
         props = {'CudaPrecision': 'mixed', 'CudaDeviceIndex': device}
@@ -45,24 +45,23 @@ def run(pdb, n_clones, temp, boxsize,
     simulation, system, integrator = get_sim(
         minimizer.context.getState(getPositions=True).getPositions(),
         watbox.topology, temp, ff, platform, props)
-    simulation.context.setVelocitiesToTemperature(300)
 
     if not os.path.exists('./solv_pdb/'):
         os.makedirs('./solv_pdb/')
 
     simulation.reporters.append(
-        PDBReporter('./solv_pdb/%s' % pdb, n_steps))
+        PDBReporter('./solv_pdb/%s.pdb' % name, n_steps))
 
     with timing('Equilibration'):
         simulation.context.setVelocitiesToTemperature(temp)
         simulation.step(n_steps)
 
     with timing('Serialization'):
-        serializeObject(system, dirname, 'system.xml')
-        serializeObject(integrator, dirname, 'integrator.xml')
+        serializeObject(system, name, 'system.xml')
+        serializeObject(integrator, name, 'integrator.xml')
         for i in xrange(n_clones):
             serializeObject(get_state(simulation, temp),
-                            dirname, 'state%d.xml' % i)
+                            name, 'state%d.xml' % i)
     print("Done!")
 
 

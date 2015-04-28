@@ -7,6 +7,7 @@ from __future__ import print_function
 
 import argparse
 import os
+from os.path import basename
 
 from mdcookbook import __author__
 from mdcookbook.core import model_from_seq, solvate
@@ -20,6 +21,7 @@ from simtk.openmm.app import PDBReporter
 def run(seq, out, n_clones, temp, boxsize,
         maxiter, n_steps, smolar, platform, device):
 
+    name = basename(out).split('.')[0]
     ff = get_ff()
 
     if platform == "CUDA":
@@ -52,18 +54,18 @@ def run(seq, out, n_clones, temp, boxsize,
         os.makedirs('./solv_pdb/')
 
     simulation.reporters.append(
-        PDBReporter('./solv_pdb/%s' % out, n_steps))
+        PDBReporter('./solv_pdb/%s.pdb' % out, n_steps))
 
     with timing('Equilibration'):
         simulation.context.setVelocitiesToTemperature(temp)
         simulation.step(n_steps)
 
     with timing('Serialization'):
-        serializeObject(system, out, 'system.xml')
-        serializeObject(integrator, out, 'integrator.xml')
+        serializeObject(system, name, 'system.xml')
+        serializeObject(integrator, name, 'integrator.xml')
         for i in xrange(n_clones):
             serializeObject(get_state(simulation, temp),
-                            out, 'state%d.xml' % i)
+                            name, 'state%d.xml' % i)
     print("Done!")
 
 
