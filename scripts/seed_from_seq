@@ -114,7 +114,7 @@ if __name__ == "__main__":
         raise ImportError('You need PyRosetta to use this script.')
 
     boxsize = None
-    eval('boxsize=%s' % options.boxsize)
+    exec('boxsize = %s' % options.boxsize)
     if not isinstance(boxsize, Vec3):
         raise TypeError('boxsize must be expressed as Vec3')
 

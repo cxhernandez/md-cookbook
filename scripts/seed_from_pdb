@@ -105,7 +105,7 @@ if __name__ == "__main__":
     structures = iglob(options.pdb)
 
     boxsize = None
-    eval('boxsize=%s' % options.boxsize)
+    exec('boxsize = %s' % options.boxsize)
     if not isinstance(boxsize, Vec3):
         raise TypeError('boxsize must be expressed as Vec3')
 
