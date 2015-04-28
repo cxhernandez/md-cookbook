@@ -5,7 +5,7 @@ from simtk.unit import kelvin, molar, bar
 
 try:
     from rosetta import Pose, FastRelax
-    from rosetta import pose_from_pdb, pose_from_seq, get_fa_scorefxn
+    from rosetta import pose_from_pdb, pose_from_sequence, get_fa_scorefxn
     from toolbox import mutate_residue as mutate
 except ImportError:
     FastRelax = get_fa_scorefxn = pose_from_pdb = mutate = None
@@ -47,11 +47,11 @@ def model(pdb, mutpos=None, mut=None, cap=True):
 
 
 def model_from_seq(seq, cap=True):
-    if pose_from_seq is None:
+    if pose_from_sequence is None:
         raise ImportError('Could not find PyRosetta.')
     scorefxn = get_fa_scorefxn()
     relax = FastRelax(scorefxn, 15)
-    pose = pose_from_seq(seq)
+    pose = pose_from_sequence(seq)
     if cap:
         pose = addCaps(pose)
     relax.apply(pose)
