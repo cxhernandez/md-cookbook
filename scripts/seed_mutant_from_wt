@@ -112,7 +112,7 @@ def parse_cmdln():
                         default='Vec3(5, 5, 5)')
     parser.add_argument('-w', '--n-waters', dest='n_wat',
                         help='Number of waters in solvent '
-                        '(Overrides box_size).',
+                        '(Overrides BOX_SIZE).',
                         default=None, type=int)
     args = parser.parse_args()
     return args

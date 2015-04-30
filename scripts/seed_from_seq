@@ -99,17 +99,17 @@ def parse_cmdln():
                         help='Max iterations for minimization.',
                         default=1000, type=int)
     parser.add_argument('-c', '--ion-concentation', dest='ion_content',
-                        help='Ion concentration.',
+                        help='Ion concentration (molar).',
                         default=0.1, type=float)
     parser.add_argument('-t', '--temperature', dest='temp',
-                        help='Simulation temperature (Kelvin).',
+                        help='Simulation temperature (kelvin).',
                         default=300, type=int)
     parser.add_argument('-b', '--box-size', dest='box_size',
                         help='Boxsize expressed as: Vec3(x, y, z).',
                         default='Vec3(5, 5, 5)')
     parser.add_argument('-w', '--n-waters', dest='n_wat',
-                        help='Number of waters in solvent '
-                        '(Overrides box_size).',
+                        help='Number of waters in solvent. '
+                        '(Overrides BOX_SIZE).',
                         default=None, type=int)
     args = parser.parse_args()
     return args
