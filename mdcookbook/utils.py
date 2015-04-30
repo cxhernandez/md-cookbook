@@ -18,9 +18,15 @@ class timing(object):
         return False
 
 
-def serializeObject(obj, dirname, objname):
+def serialize(obj, dirname, objname):
     filename = './%s/%s' % (dirname, objname)
     if not os.path.exists(dirname):
         os.makedirs(dirname)
     with open(filename, 'wb') as objfile:
         objfile.write(XmlSerializer.serialize(obj))
+
+
+def count(obj):
+    for i, _ in enumerate(obj):
+        pass
+    return i

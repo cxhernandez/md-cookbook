@@ -9,16 +9,16 @@ from os.path import basename
 from glob import iglob
 
 from mdcookbook import __author__
-from mdcookbook.core import solvate
+from mdcookbook.core import solvate, smart_solvate
 from mdcookbook.core import get_sim, get_ff, get_state
-from mdcookbook.utils import timing, serializeObject
+from mdcookbook.utils import timing, serialize
 
 from simtk.openmm import Platform, Vec3
 from simtk.openmm.app import PDBReporter, PDBFile
 
 
-def run(pdb, n_clones, temp, boxsize,
-        maxiter, n_steps, smolar, platform, device):
+def run(pdb, n_clones, temp, boxsize, n_wat,
+        max_iter, n_steps, ion_content, platform, device):
 
     name = basename(pdb).split('.')[0]
 
@@ -31,20 +31,26 @@ def run(pdb, n_clones, temp, boxsize,
 
     with timing('Load files'):
         pdb = PDBFile(pdb)
-        ff = get_ff()
+        forcefield = get_ff()
 
     with timing('Solvation'):
-        watbox = solvate(pdb.positions, pdb.topology, ff, smolar, boxsize)
+        if n_wat is not None:
+            wat_box = smart_solvate(pdb.positions, pdb.topology, forcefield,
+                                    ion_content, n_wat)
+        else:
+            wat_box = solvate(pdb.positions, pdb.topology, forcefield,
+                              ion_content, box_size)
 
-    minimizer, _, _ = get_sim(watbox.positions, watbox.topology, temp,
-                              ff, Platform.getPlatformByName('CPU'), {})
+    minimizer, _, _ = get_sim(wat_box.positions, wat_box.topology, temp,
+                              forcefield, Platform.getPlatformByName('CPU'),
+                              {})
 
     with timing('Minimization'):
         minimizer.minimizeEnergy(maxIterations=1000)
 
     simulation, system, integrator = get_sim(
         minimizer.context.getState(getPositions=True).getPositions(),
-        watbox.topology, temp, ff, platform, props)
+        wat_box.topology, temp, forcefield, platform, props)
 
     if not os.path.exists('./solv_pdb/'):
         os.makedirs('./solv_pdb/')
@@ -57,11 +63,10 @@ def run(pdb, n_clones, temp, boxsize,
         simulation.step(n_steps)
 
     with timing('Serialization'):
-        serializeObject(system, name, 'system.xml')
-        serializeObject(integrator, name, 'integrator.xml')
+        serialize(system, name, 'system.xml')
+        serialize(integrator, name, 'integrator.xml')
         for i in xrange(n_clones):
-            serializeObject(get_state(simulation, temp),
-                            name, 'state%d.xml' % i)
+            serialize(get_state(simulation, temp), name, 'state%d.xml' % i)
     print("Done!")
 
 
@@ -83,18 +88,22 @@ def parse_cmdln():
     parser.add_argument('-n', '--n-steps', dest='n_steps',
                         help='Number of equilibration steps.',
                         default=50000, type=int)
-    parser.add_argument('-i', '--max-iterations', dest='maxiter',
+    parser.add_argument('-i', '--max-iterations', dest='max_iter',
                         help='Max iterations for minimization.',
                         default=1000, type=int)
-    parser.add_argument('-c', '--solvent-concentation', dest='smolar',
-                        help='Solvent concentration.',
+    parser.add_argument('-c', '--ion-concentation', dest='ion_content',
+                        help='Ion concentration.',
                         default=0.1, type=float)
     parser.add_argument('-t', '--temperature', dest='temp',
                         help='Simulation temperature (Kelvin).',
                         default=300, type=int)
-    parser.add_argument('-b', '--box-size', dest='boxsize',
+    parser.add_argument('-b', '--box-size', dest='box_size',
                         help='Boxsize expressed as: Vec3(x, y, z).',
                         default='Vec3(5, 5, 5)')
+    parser.add_argument('-w', '--n-waters', dest='n_wat',
+                        help='Number of waters in solvent '
+                        '(Overrides box_size).',
+                        default=None, type=int)
     args = parser.parse_args()
     return args
 
@@ -103,12 +112,12 @@ if __name__ == "__main__":
     options = parse_cmdln()
     structures = iglob(options.pdb)
 
-    boxsize = None
-    exec('boxsize = %s' % options.boxsize)
-    if not isinstance(boxsize, Vec3):
-        raise TypeError('boxsize must be expressed as Vec3')
+    box_size = None
+    exec('box_size = %s' % options.box_size)
+    if not isinstance(box_size, Vec3):
+        raise TypeError('box_size must be expressed as Vec3')
 
     for pdb in structures:
-        run(pdb, options.n_clones, options.temp,
-            boxsize, options.maxiter, options.n_steps, options.smolar,
+        run(pdb, options.n_clones, options.temp, box_size, options.n_wat,
+            options.max_iter, options.n_steps, options.ion_content,
             options.platform, str(options.device))
