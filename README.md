@@ -25,3 +25,11 @@ Enjoy!
 
 
 <p align="right">*requires PyRosetta and ParmEd</p>
+
+---
+
+###dependecies:
+
+  + OpenMM
+  + ParmEd (optional)
+  + PyRosetta (optional)
