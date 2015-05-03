@@ -3,7 +3,7 @@ from simtk.openmm.app import ForceField, Simulation, Modeller, HBonds, PME
 from simtk.unit import picoseconds, femtoseconds, nanometers
 from simtk.unit import kelvin, molar, bar
 
-from numpy.random import choice
+from random import shuffle
 from mdcookbook.utils import count
 
 try:
@@ -93,28 +93,37 @@ def get_ff(param='amber99sbildn.xml', watmod='tip3p.xml'):
     return ForceField(param, watmod)
 
 
-def unpack_pose(pose):
+def rmNV(s):
+    [s.atoms.remove(atom) for atom in s.atoms if atom.name == 'NV']
+    [s.bonds.remove(bond) for bond in s.bonds
+     if bond.atom1.name == 'NV' or bond.atom2.name == 'NV']
+    return s
+
+
+def unpack_pose(pose, noNV=True):
     if load_rosetta:
         s = load_rosetta(pose)
+        if noNV:
+            s = rmNV(s)
     else:
         raise ImportError('Could not find ParmEd.')
     return s.positions, s.topology
 
 
-def get_res_idx(topology, res_type='HOH'):
+def get_res(topology, res_type='HOH'):
     for residue in topology.residues():
         if residue.name == res_type:
             yield residue
 
 
 def get_num_res(topology, res_type='HOH'):
-    return count(get_res_idx(topology, res_type))
+    return count(get_res(topology, res_type))
 
 
 def del_res(modeller, n_del, res_type='HOH'):
-    res_del = choice(list(get_res_idx(modeller.topology, res_type=res_type)),
-                     size=n_del, replace=False)
-    modeller.delete(res_del)
+    res = list(get_res(modeller.topology, res_type=res_type))
+    shuffle(res)
+    modeller.delete(res[:n_del])
     return modeller
 
 
