@@ -94,9 +94,7 @@ def get_ff(param='amber99sbildn.xml', watmod='tip3p.xml'):
 
 
 def rmNV(s):
-    [s.atoms.remove(atom) for atom in s.atoms if atom.name == 'NV']
-    [s.bonds.remove(bond) for bond in s.bonds
-     if bond.atom1.name == 'NV' or bond.atom2.name == 'NV']
+    s.strip([atom.name == 'NV' for atom in s.atoms])
     return s
 
 
