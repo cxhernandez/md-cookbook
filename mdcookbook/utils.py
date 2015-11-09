@@ -8,6 +8,7 @@ import os
 
 class timing(object):
     "Context manager for printing performance"
+
     def __init__(self, name):
         self.name = name
 
@@ -34,14 +35,22 @@ def count(obj):
         pass
     return i
 
+
 def get_args():
     parser = argparse.ArgumentParser(
         epilog="Written by %s" % __author__,
         description=__doc__,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-pt', '--platform', dest='platform',
-                        help='Platform type.', choices=['CPU','CUDA','OpenCL'],
-                        default="CPU")
+    parser.add_argument(
+        '-pt',
+        '--platform',
+        dest='platform',
+        help='Platform type.',
+        choices=[
+            'CPU',
+            'CUDA',
+            'OpenCL'],
+        default="CPU")
     parser.add_argument('-d', '--device-index', dest='device',
                         help='GPU device index.', default=0, type=int)
     parser.add_argument('-nc', '--n-clones', dest='n_clones',

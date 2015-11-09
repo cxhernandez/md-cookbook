@@ -70,12 +70,12 @@ def model_from_seq(seq, cap=True):
 def get_sim(positions, topology, temp, forcefield, platform, props, nbcutoff=1,
             intstep=2, baro=1, tol=1e-5):
     system = forcefield.createSystem(topology, nonbondedMethod=PME,
-                                     nonbondedCutoff=nbcutoff*nanometers,
+                                     nonbondedCutoff=nbcutoff * nanometers,
                                      constraints=HBonds)
-    integrator = LangevinIntegrator(temp*kelvin, 1/picoseconds,
-                                    intstep*femtoseconds)
+    integrator = LangevinIntegrator(temp * kelvin, 1 / picoseconds,
+                                    intstep * femtoseconds)
     integrator.setConstraintTolerance(tol)
-    system.addForce(MonteCarloBarostat(baro*bar, temp*kelvin))
+    system.addForce(MonteCarloBarostat(baro * bar, temp * kelvin))
     simulation = Simulation(topology, system, integrator, platform, props)
     simulation.context.setPositions(positions)
     return simulation, system, integrator
@@ -128,9 +128,16 @@ def del_res(modeller, n_del, res_type='HOH'):
 def solvate(positions, topology, forcefield, ion_content, boxSize=None,
             padding=None, model='tip3p'):
     modeller = Modeller(topology, positions)
-    modeller.addSolvent(forcefield, model='tip3p', padding=padding*nanometers,
-                        boxSize=boxSize, positiveIon='Na+', negativeIon='Cl-',
-                        ionicStrength=ion_content*molar)
+    modeller.addSolvent(
+        forcefield,
+        model='tip3p',
+        padding=padding *
+        nanometers,
+        boxSize=boxSize,
+        positiveIon='Na+',
+        negativeIon='Cl-',
+        ionicStrength=ion_content *
+        molar)
     return modeller
 
 
@@ -159,15 +166,15 @@ def smart_solvate(positions, topology, forcefield, ion_content, n,
                        model=model, padding=0.0)
     box_o = modeller.topology.getUnitCellDimensions()
     n_wat_o = get_num_res(modeller.topology)
-    volume_o = box_o[0]*box_o[1]*box_o[2]
+    volume_o = box_o[0] * box_o[1] * box_o[2]
 
     if n_wat_o > n:
         raise Exception("Target number of waters is too small.")
 
     # Slowly increase the box size until just above target number of waters
-    scale = 0.9*(n/n_wat_o)**(1.0/3.0)
+    scale = 0.9 * (n / n_wat_o) ** (1.0 / 3.0)
     over_target = False
-    xwat = int(.01*n_wat_o)
+    xwat = int(.01 * n_wat_o)
     density = None
     while not over_target and tries > 0:
         modeller = solvate(positions, topology, forcefield, ion_content,
@@ -181,7 +188,7 @@ def smart_solvate(positions, topology, forcefield, ion_content, n,
                 volume = box[0] * box[1] * box[2]
                 density = (n_wat - n_wat_o) / (volume - volume_o)
             delta = (n + xwat - n_wat_o) / density
-            scale = ((volume_o + delta) / volume_o)**(1.0/3.0)
+            scale = ((volume_o + delta) / volume_o) ** (1.0 / 3.0)
             xwat += xwat
             tries -= 1
 
@@ -196,9 +203,9 @@ def smart_solvate(positions, topology, forcefield, ion_content, n,
 
     # Adjust ion concentrations to expected concentration
     n_anion = get_num_res(modeller.topology, res_type='CL')
-    n_anion_del = int(float(n_wat_del)/n_wat * n_anion)
+    n_anion_del = int(float(n_wat_del) / n_wat * n_anion)
     n_cation = get_num_res(modeller.topology, res_type='NA')
-    n_cation_del = int(float(n_wat_del)/n_wat * n_cation)
+    n_cation_del = int(float(n_wat_del) / n_wat * n_cation)
     if n_anion_del > 0:
         modeller = del_res(modeller, n_wat_del, res_type='CL')
     if n_cation_del > 0:
