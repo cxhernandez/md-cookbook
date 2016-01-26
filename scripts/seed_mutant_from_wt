@@ -10,7 +10,7 @@ from glob import iglob
 import os
 
 
-from mdcookbook.core import model, solvate, smart_solvate
+from mdcookbook.core import model, solvate
 from mdcookbook.core import get_sim, get_ff, get_state, unpack_pose
 from mdcookbook.utils import timing, serialize, get_args
 
@@ -19,7 +19,7 @@ from simtk.openmm.app import PDBReporter
 from os.path import basename
 
 
-def run(pdb, mut_pos, mut, n_clones, temp, box_size, n_wat,
+def run(pdb, mut_pos, mut, n_clones, temp, box_size, n_solv,
         max_iter, n_steps, ion_content, platform, device):
 
     name = basename(pdb).split('.')[0]
@@ -39,12 +39,12 @@ def run(pdb, mut_pos, mut, n_clones, temp, box_size, n_wat,
         positions, topology = unpack_pose(pose)
 
     with timing('Solvation'):
-        if n_wat is not None:
-            wat_box = smart_solvate(positions, topology, forcefield,
-                                    ion_content, n_wat)
+        if n_solv is not None:
+            wat_box = solvate(positions, topology, forcefield,
+                                    ion_content, numAdded=n_solv)
         else:
             wat_box = solvate(positions, topology, forcefield,
-                              ion_content, box_size)
+                              ion_content, boxSize=box_size)
 
     minimizer, _, _ = get_sim(wat_box.positions, wat_box.topology, temp,
                               forcefield, Platform.getPlatformByName('CPU'),
@@ -106,5 +106,5 @@ if __name__ == "__main__":
 
     for f in files:
         run(f, options.mut_pos, options.mut, options.n_clones, options.temp,
-            box_size, options.n_wat, options.max_iter, options.n_steps,
+            box_size, options.n_solv, options.max_iter, options.n_steps,
             options.ion_content, options.platform, str(options.device))

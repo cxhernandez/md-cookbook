@@ -71,8 +71,8 @@ def get_args():
     parser.add_argument('-b', '--box-size', dest='box_size',
                         help='Boxsize expressed as: Vec3(x, y, z).',
                         default='Vec3(5, 5, 5)')
-    parser.add_argument('-w', '--n-waters', dest='n_wat',
-                        help='Number of waters in solvent '
+    parser.add_argument('-ns', '--n-solvent', dest='n_solv',
+                        help='Number of total solvent molecules '
                         '(Overrides BOX_SIZE).',
                         default=None, type=int)
     return parser
