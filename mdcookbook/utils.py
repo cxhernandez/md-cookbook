@@ -6,7 +6,7 @@ import time
 import os
 
 
-class timing(object):
+class Timing(object):
     "Context manager for printing performance"
 
     def __init__(self, name):
