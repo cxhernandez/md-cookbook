@@ -19,7 +19,7 @@ except ImportError:
 
 try:
     from chemistry import load_rosetta
-except ImportError:
+except:
     load_rosetta = None
 
 
@@ -93,16 +93,16 @@ def get_ff(param='amber99sbildn.xml', watmod='tip3p.xml'):
     return ForceField(param, watmod)
 
 
-def rmnv(s):
+def rmNV(s):
     s.strip([atom.name == 'NV' for atom in s.atoms])
     return s
 
 
-def unpack_pose(pose, nonv=True):
+def unpack_pose(pose, noNV=True):
     if load_rosetta:
         s = load_rosetta(pose)
-        if nonv:
-            s = rmnv(s)
+        if noNV:
+            s = rmNV(s)
     else:
         raise ImportError('Could not find ParmEd.')
     return s.positions, s.topology
@@ -134,6 +134,6 @@ def solvate(positions, topology, forcefield, ion_content, model='tip3p',
         positiveIon='Na+',
         negativeIon='Cl-',
         ionicStrength=ion_content*molar,
-        neutralize=neutralize,
+        neutralize=True,
         **kwargs)
     return modeller

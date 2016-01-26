@@ -8,7 +8,7 @@ from os.path import basename
 from glob import iglob
 
 from mdcookbook.core import solvate, get_sim, get_ff, get_state
-from mdcookbook.utils import Timing, serialize, get_args
+from mdcookbook.utils import timing, serialize, get_args
 
 from simtk.openmm import Platform, Vec3
 from simtk.openmm.app import PDBReporter, PDBFile
@@ -26,11 +26,11 @@ def run(pdb, n_clones, temp, boxsize, n_solv,
     else:
         props = {}
 
-    with Timing('Load files'):
+    with timing('Load files'):
         pdb = PDBFile(pdb)
         forcefield = get_ff()
 
-    with Timing('Solvation'):
+    with timing('Solvation'):
         if n_solv is not None:
             wat_box = solvate(pdb.positions, pdb.topology, forcefield,
                                     ion_content, numAdded=n_solv)
@@ -42,7 +42,7 @@ def run(pdb, n_clones, temp, boxsize, n_solv,
                               forcefield, Platform.getPlatformByName('CPU'),
                               {})
 
-    with Timing('Minimization'):
+    with timing('Minimization'):
         minimizer.minimizeEnergy(maxIterations=1000)
 
     simulation, system, integrator = get_sim(
@@ -55,11 +55,11 @@ def run(pdb, n_clones, temp, boxsize, n_solv,
     simulation.reporters.append(
         PDBReporter('./solv_pdb/%s.pdb' % name, n_steps))
 
-    with Timing('Equilibration'):
+    with timing('Equilibration'):
         simulation.context.setVelocitiesToTemperature(temp)
         simulation.step(n_steps)
 
-    with Timing('Serialization'):
+    with timing('Serialization'):
         serialize(system, name, 'system.xml')
         serialize(integrator, name, 'integrator.xml')
         for i in xrange(n_clones):

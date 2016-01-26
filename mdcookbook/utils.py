@@ -6,7 +6,7 @@ import time
 import os
 
 
-class Timing(object):
+class timing(object):
     "Context manager for printing performance"
 
     def __init__(self, name):
@@ -15,7 +15,7 @@ class Timing(object):
     def __enter__(self):
         self.start = time.time()
 
-    def __exit__(self):
+    def __exit__(self, ty, val, tb):
         end = time.time()
         print("PERFORMANCE [%s] : %0.3f seconds" % (self.name,
                                                     end - self.start))
