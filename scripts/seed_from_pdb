@@ -7,15 +7,14 @@ import os
 from os.path import basename
 from glob import iglob
 
-from mdcookbook.core import solvate, smart_solvate
-from mdcookbook.core import get_sim, get_ff, get_state
+from mdcookbook.core import solvate, get_sim, get_ff, get_state
 from mdcookbook.utils import timing, serialize, get_args
 
 from simtk.openmm import Platform, Vec3
 from simtk.openmm.app import PDBReporter, PDBFile
 
 
-def run(pdb, n_clones, temp, boxsize, n_wat,
+def run(pdb, n_clones, temp, boxsize, n_solv,
         max_iter, n_steps, ion_content, platform, device):
 
     name = basename(pdb).split('.')[0]
@@ -32,12 +31,12 @@ def run(pdb, n_clones, temp, boxsize, n_wat,
         forcefield = get_ff()
 
     with timing('Solvation'):
-        if n_wat is not None:
-            wat_box = smart_solvate(pdb.positions, pdb.topology, forcefield,
-                                    ion_content, n_wat)
+        if n_solv is not None:
+            wat_box = solvate(pdb.positions, pdb.topology, forcefield,
+                                    ion_content, numAdded=n_solv)
         else:
             wat_box = solvate(pdb.positions, pdb.topology, forcefield,
-                              ion_content, box_size)
+                              ion_content, boxSize=box_size)
 
     minimizer, _, _ = get_sim(wat_box.positions, wat_box.topology, temp,
                               forcefield, Platform.getPlatformByName('CPU'),
@@ -87,6 +86,6 @@ if __name__ == "__main__":
         raise TypeError('box_size must be expressed as Vec3')
 
     for pdb in structures:
-        run(pdb, options.n_clones, options.temp, box_size, options.n_wat,
+        run(pdb, options.n_clones, options.temp, box_size, options.n_solv,
             options.max_iter, options.n_steps, options.ion_content,
             options.platform, str(options.device))
