@@ -24,7 +24,7 @@ except ImportError:
 
 try:
     from mdtraj.utils.rotation import (uniform_quaternion,
-                                   rotation_matrix_from_quaternion)
+                                       rotation_matrix_from_quaternion)
 except ImportError:
     uniform_quaternion = rotation_matrix_from_quaternion = None
 
@@ -185,11 +185,12 @@ def solvate(positions, topology, forcefield, ion_content, model='tip3p',
         **kwargs)
     return modeller
 
+
 def add_ligand(prot, lig, max_dist=15, min_dist=5):
     """
     Adds a given ligand to a protein system (w/o solvent) using MDTraj
     """
-    
+
     if uniform_quaternion is None:
         raise ImportError('Could not find MDTraj.')
     if np is None:
@@ -201,8 +202,8 @@ def add_ligand(prot, lig, max_dist=15, min_dist=5):
 
     # Randomly rotate ligand
     lig.xyz = np.dot(lig.xyz.reshape((lig.n_atoms, 3)),
-                      rotation_matrix_from_quaternion(uniform_quaternion())
-                      ).reshape((lig.n_frames, lig.n_atoms, 3))
+                     rotation_matrix_from_quaternion(uniform_quaternion())
+                     ).reshape((lig.n_frames, lig.n_atoms, 3))
 
     # Get furthest protein atom from center
     dist = (prot.xyz ** 2.).sum(2).max()**.5
@@ -215,11 +216,11 @@ def add_ligand(prot, lig, max_dist=15, min_dist=5):
     atom_pair_distances = np.sum((prot.xyz - vec)**2, 2)**.5
 
     # If too far, shift closer to protein
-    if min_atom_pair_distance.min() > max_dist:
+    if atom_pair_distances.min() > max_dist:
         min_pair = atom_pair_distances.argmin()
-        vec -= ((min_atom_pair_distance.min() - max_dist)
-                * (prot.xyz[:, min_pair, :] - vec)
-                / min_atom_pair_distance.min())
+        vec -= ((atom_pair_distances.min() - max_dist) *
+                (prot.xyz[:, min_pair, :] - vec) /
+                atom_pair_distances.min())
 
     # Move ligand
     lig.xyz += vec
@@ -231,7 +232,7 @@ def add_ligand(prot, lig, max_dist=15, min_dist=5):
     lig_top = lig.topology.to_openmm()
 
     # Join structures
-    modeller = app.modeller.Modeller(prot_top, prot_pos)
+    modeller = Modeller(prot_top, prot_pos)
     modeller.add(lig_top, lig_pos)
 
     return modeller

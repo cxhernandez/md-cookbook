@@ -38,7 +38,7 @@ def run(seq, out, n_clones, temp, boxsize, n_solv,
     with Timing('Solvation'):
         if n_solv is not None:
             wat_box = solvate(positions, topology, forcefield,
-                                    ion_content, numAdded=n_solv)
+                              ion_content, numAdded=n_solv)
         else:
             wat_box = solvate(positions, topology, forcefield,
                               ion_content, boxSize=box_size)
@@ -67,7 +67,7 @@ def run(seq, out, n_clones, temp, boxsize, n_solv,
     with Timing('Serialization'):
         serialize(system, name, 'system.xml')
         serialize(integrator, name, 'integrator.xml')
-        for i in xrange(n_clones):
+        for i in range(n_clones):
             serialize(get_state(simulation, temp), name, 'state%d.xml' % i)
     print("Done!")
 

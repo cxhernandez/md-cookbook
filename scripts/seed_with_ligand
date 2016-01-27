@@ -69,7 +69,7 @@ def run(prot, lig, gaff_xml, n_clones, temp, boxsize, n_solv,
     with Timing('Serialization'):
         serialize(system, name, 'system.xml')
         serialize(integrator, name, 'integrator.xml')
-        for i in xrange(n_clones):
+        for i in range(n_clones):
             serialize(get_state(simulation, temp), name, 'state%d.xml' % i)
     print("Done!")
 
