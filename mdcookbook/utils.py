@@ -47,7 +47,7 @@ def serialize(obj, dirname, objname):
     filename = './%s/%s' % (dirname, objname)
     if not os.path.exists(dirname):
         os.makedirs(dirname)
-    with open(filename, 'wb') as objfile:
+    with open(filename, 'w') as objfile:
         objfile.write(XmlSerializer.serialize(obj))
 
 

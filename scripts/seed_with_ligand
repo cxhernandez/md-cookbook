@@ -77,13 +77,13 @@ def run(prot, lig, gaff_xml, n_clones, temp, boxsize, n_solv,
 def parse_cmdln():
     parser = get_args()
     parser.add_argument('-p', '--protein', dest='prot',
-                        help='Glob string to find PDB files.',
+                        help='Glob string to find protein PDBs.',
                         required=True)
     parser.add_argument('-l', '--ligand', dest='lig',
-                        help='Glob string to find PDB files.',
+                        help='Ligand structure filepath.',
                         required=True)
     parser.add_argument('-gx', '--gaff-xml', dest='gaff_xml',
-                        help='Glob string to find PDB files.',
+                        help='GAFF parameters for ligand in XML format.',
                         required=True)
     args = parser.parse_args()
     return args
@@ -91,7 +91,7 @@ def parse_cmdln():
 
 if __name__ == "__main__":
     options = parse_cmdln()
-    structures = iglob(options.pdb)
+    structures = iglob(options.prot)
 
     box_size = None
     exec('box_size = %s' % options.box_size)
