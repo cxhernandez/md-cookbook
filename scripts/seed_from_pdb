@@ -26,6 +26,8 @@ def run(pdb, n_clones, temp, boxsize, n_solv,
     else:
         props = {}
 
+    platform = Platform.getPlatformByName(platform)
+
     with Timing('Load files'):
         pdb = PDBFile(pdb)
         forcefield = get_ff()

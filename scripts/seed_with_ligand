@@ -29,6 +29,8 @@ def run(prot, lig, gaff_xml, n_clones, temp, boxsize, n_solv,
     else:
         props = {}
 
+    platform = Platform.getPlatformByName(platform)
+
     with Timing('Load files'):
         prot = md.load(prot)
         lig = md.load(lig)
