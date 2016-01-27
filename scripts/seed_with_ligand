@@ -1,0 +1,103 @@
+#! /usr/bin/env python
+"""
+Use a PDB file to solvate, minimize, and equilibrate a simulation.
+"""
+
+import os
+from os.path import basename
+from glob import iglob
+
+import mdtraj as md
+
+from mdcookbook.core import add_ligand, solvate, get_sim, get_ff, get_state
+from mdcookbook.utils import Timing, serialize, get_args
+
+from simtk.openmm import Platform, Vec3
+from simtk.openmm.app import PDBReporter
+
+
+def run(prot, lig, gaff_xml, n_clones, temp, boxsize, n_solv,
+        max_iter, n_steps, ion_content, platform, device):
+
+    name = basename(prot).split('.')[0]
+
+    if platform == "CUDA":
+        props = {'CudaPrecision': 'mixed', 'CudaDeviceIndex': device}
+    elif platform == "OpenCL":
+        props = {'OpenCLPrecision': 'mixed', 'OpenCLDeviceIndex': device}
+    else:
+        props = {}
+
+    with Timing('Load files'):
+        prot = md.load(prot)
+        lig = md.load(lig)
+        forcefield = get_ff(gaff_xml)
+
+    with Timing('Modeling'):
+        modeller = add_ligand(prot, lig)
+
+    with Timing('Solvation'):
+        if n_solv is not None:
+            wat_box = solvate(modeller.positions, modeller.topology,
+                              forcefield, ion_content, numAdded=n_solv)
+        else:
+            wat_box = solvate(modeller.positions, modeller.topology,
+                              forcefield, ion_content, boxSize=box_size)
+
+    minimizer, _, _ = get_sim(wat_box.positions, wat_box.topology, temp,
+                              forcefield, Platform.getPlatformByName('CPU'),
+                              {})
+
+    with Timing('Minimization'):
+        minimizer.minimizeEnergy(maxIterations=1000)
+
+    simulation, system, integrator = get_sim(
+        minimizer.context.getState(getPositions=True).getPositions(),
+        wat_box.topology, temp, forcefield, platform, props)
+
+    if not os.path.exists('./solv_pdb/'):
+        os.makedirs('./solv_pdb/')
+
+    simulation.reporters.append(
+        PDBReporter('./solv_pdb/%s.pdb' % name, n_steps))
+
+    with Timing('Equilibration'):
+        simulation.context.setVelocitiesToTemperature(temp)
+        simulation.step(n_steps)
+
+    with Timing('Serialization'):
+        serialize(system, name, 'system.xml')
+        serialize(integrator, name, 'integrator.xml')
+        for i in xrange(n_clones):
+            serialize(get_state(simulation, temp), name, 'state%d.xml' % i)
+    print("Done!")
+
+
+def parse_cmdln():
+    parser = get_args()
+    parser.add_argument('-p', '--protein', dest='prot',
+                        help='Glob string to find PDB files.',
+                        required=True)
+    parser.add_argument('-l', '--ligand', dest='lig',
+                        help='Glob string to find PDB files.',
+                        required=True)
+    parser.add_argument('-gx', '--gaff-xml', dest='gaff_xml',
+                        help='Glob string to find PDB files.',
+                        required=True)
+    args = parser.parse_args()
+    return args
+
+
+if __name__ == "__main__":
+    options = parse_cmdln()
+    structures = iglob(options.pdb)
+
+    box_size = None
+    exec('box_size = %s' % options.box_size)
+    if not isinstance(box_size, Vec3):
+        raise TypeError('box_size must be expressed as Vec3')
+
+    for pdb in structures:
+        run(pdb, options.lig, options.gaff_xml, options.n_clones, options.temp,
+            box_size, options.n_solv, options.max_iter, options.n_steps,
+            options.ion_content, options.platform, str(options.device))
