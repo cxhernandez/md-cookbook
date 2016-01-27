@@ -10,21 +10,28 @@ Enjoy!
 
 ###recipes:
 
-  + **seed_from_pdb**: 
+  + **seed_from_pdb**:
 
   Use a PDB file to solvate, minimize, and equilibrate a simulation.
-  
-  + **seed_mutant_from_wt**: 
-  
-  Mutate a single amino acid in an existing PDB and start a round of equilibration.*
+
+  + **seed_mutant_from_wt**:
+
+  Mutate a single amino acid in an existing PDB and start a round of
+  equilibration.*
 
   + **seed_from_seq**:
-  
+
   Solvate and equilibrate a protein simulation from a primary sequence.*
+
+  + **seed_with_ligand**:
+
+  Solvate and equilibrate a ligand binding simulation from separate protein and
+  ligand structures.**
 
 
 
 <p align="right">*requires PyRosetta and ParmEd</p>
+<p align="right">**requires MDTraj and NumPy</p>
 
 ---
 
@@ -33,3 +40,5 @@ Enjoy!
   + OpenMM
   + ParmEd (optional)
   + PyRosetta (optional)
+  + MDTraj (optional)
+  + NumPy (optional)

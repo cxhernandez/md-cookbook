@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 """
-Use a PDB file to solvate, minimize, and equilibrate a simulation.
+Solvate, minimize, and equilibrate a ligand binding simulation from separate
+protein and ligand structures.
 """
 
 import os

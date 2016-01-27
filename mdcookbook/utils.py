@@ -1,10 +1,14 @@
 from mdcookbook import __author__
 
 from simtk.openmm import XmlSerializer
-import numpy as np
 import argparse
 import time
 import os
+
+try:
+    import numpy as np
+except ImportError:
+    np = None
 
 
 class Timing(object):
@@ -25,17 +29,17 @@ class Timing(object):
 
 def randvec():
     """
-    Generates a random 3D unit vector (direction) with a uniform spherical distribution
-    Algo from http://stackoverflow.com/questions/5408276/python-uniform-spherical-distribution
-    :return:
+    Generates a random 3D unit vector (direction) with a uniform spherical
+    distribution algorithm from
+    http://stackoverflow.com/questions/5408276/python-uniform-spherical-distribution
     """
-    phi = np.random.uniform(0,np.pi*2)
-    costheta = np.random.uniform(-1,1)
+    phi = np.random.uniform(0, np.pi*2)
+    costheta = np.random.uniform(-1, 1)
 
-    theta = np.arccos( costheta )
-    x = np.sin( theta) * np.cos( phi )
-    y = np.sin( theta) * np.sin( phi )
-    z = np.cos( theta )
+    theta = np.arccos(costheta)
+    x = np.sin(theta) * np.cos(phi)
+    y = np.sin(theta) * np.sin(phi)
+    z = np.cos(theta)
     return np.array([x, y, z])
 
 
