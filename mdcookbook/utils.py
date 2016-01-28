@@ -57,8 +57,8 @@ def deserialize(file):
         return XmlSerializer.deserialize(data)
 
 
-def count(obj):
-    for i, _ in enumerate(obj):
+def count(obj, i=0):
+    for i, _ in enumerate(obj, i+1):
         pass
     return i
 
