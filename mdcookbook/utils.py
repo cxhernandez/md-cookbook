@@ -5,6 +5,11 @@ import argparse
 import time
 import os
 
+try:
+    import numpy as np
+except ImportError:
+    np = None
+
 
 class Timing(object):
     "Context manager for printing performance"
@@ -22,16 +27,38 @@ class Timing(object):
         return False
 
 
+def randvec():
+    """
+    Generates a random 3D unit vector (direction) with a uniform spherical
+    distribution algorithm from
+    http://stackoverflow.com/questions/5408276/python-uniform-spherical-distribution
+    """
+    phi = np.random.uniform(0, np.pi*2)
+    costheta = np.random.uniform(-1, 1)
+
+    theta = np.arccos(costheta)
+    x = np.sin(theta) * np.cos(phi)
+    y = np.sin(theta) * np.sin(phi)
+    z = np.cos(theta)
+    return np.array([x, y, z])
+
+
 def serialize(obj, dirname, objname):
     filename = './%s/%s' % (dirname, objname)
     if not os.path.exists(dirname):
         os.makedirs(dirname)
-    with open(filename, 'wb') as objfile:
+    with open(filename, 'w') as objfile:
         objfile.write(XmlSerializer.serialize(obj))
 
 
-def count(obj):
-    for i, _ in enumerate(obj):
+def deserialize(file):
+        with open(file) as stream:
+                data = stream.read().replace('\n', '')
+        return XmlSerializer.deserialize(data)
+
+
+def count(obj, i=0):
+    for i, _ in enumerate(obj, i+1):
         pass
     return i
 
