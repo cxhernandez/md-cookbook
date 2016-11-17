@@ -1,0 +1,50 @@
+package:
+  name: mdcookbook
+  version: {{ GIT_DESCRIBE_TAG }}
+
+source:
+  path: ../../
+
+build:
+  entry_points:
+    - mdcookbook = mdcookbook.cli.main:main
+  preserve_egg_dir: True
+  number: {{ GIT_DESCRIBE_NUMBER }}
+
+requirements:
+  build:
+    - python
+    - setuptools
+
+  run:
+    - python
+    - numpy
+    - scipy
+    - pandas
+    - openmm
+    - ambermini
+    - mdtraj
+    - msmbuilder
+
+test:
+  requires:
+    - nose
+    - nose-timer
+    - coverage
+    - python-coveralls
+    - msmb_data
+
+  imports:
+    - mdcookbook
+    - mdcookbook.tests
+
+  commands:
+    - python -c "import mdcookbook; import mdcookbook.tests;"
+    - nosetests -v mdcookbook --with-timer --with-coverage --cover-package=mdcookbook
+
+about:
+  home: https://github.com/cxhernandez/md-cookbook
+  license: MIT
+  summary: 'Analyze correlated motions in MD trajectories with only a few lines of Python.'
+
+# vim: ts=2 sw=2 et

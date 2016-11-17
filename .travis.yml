@@ -1,0 +1,23 @@
+language: c
+sudo: false
+
+env:
+    matrix:
+        - CONDA_PY=3.4
+        - CONDA_PY=3.5
+
+branches:
+  only:
+    - master
+
+install:
+    - source devtools/travis-ci/install_miniconda.sh
+    - conda config --add channels omnia
+    - conda install -yq python-coveralls
+
+script:
+    - conda build --quiet devtools/conda-recipe
+
+after_success:
+  - cp $HOME/miniconda3/conda-bld/test-tmp_dir/.coverage .
+  - coveralls
