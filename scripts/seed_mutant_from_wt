@@ -10,7 +10,7 @@ from glob import iglob
 import os
 
 
-from mdcookbook.core import model, solvate
+from mdcookbook.core import model_from_pdb, solvate
 from mdcookbook.core import get_sim, get_ff, get_state, unpack_pose
 from mdcookbook.utils import Timing, serialize, get_args
 
@@ -35,23 +35,25 @@ def run(pdb, mut_pos, mut, n_clones, temp, box_size, n_solv,
     platform = Platform.getPlatformByName(platform)
 
     with Timing('Modeling'):
-        pose = model(pdb, mutpos=mut_pos, mut=mut)
-        positions, topology = unpack_pose(pose)
+        pose = model_from_pdb(pdb, mut_pos=mut_pos, mut=mut)
+#        positions, topology = unpack_pose(pose)
 
     with Timing('Solvation'):
         if n_solv is not None:
             wat_box = solvate(positions, topology, forcefield,
                               ion_content, numAdded=n_solv)
         else:
-            wat_box = solvate(positions, topology, forcefield,
-                              ion_content, boxSize=box_size)
+            wat_box = pose
+            wat_box.topology.setPeriodicBoxVectors([[box_size[0], 0, 0], [0, box_size[0], 0], [0, 0, box_size[0]]])
+#            wat_box = solvate(positions, topology, forcefield,
+#                              ion_content, boxSize=box_size)
 
     minimizer, _, _ = get_sim(wat_box.positions, wat_box.topology, temp,
                               forcefield, Platform.getPlatformByName('CPU'),
                               {})
 
-    with Timing('Minimization'):
-        minimizer.minimizeEnergy(maxIterations=max_iter)
+#    with Timing('Minimization'):
+#        minimizer.minimizeEnergy(maxIterations=max_iter)
 
     simulation, system, integrator = get_sim(
         minimizer.context.getState(getPositions=True).getPositions(),
@@ -65,7 +67,7 @@ def run(pdb, mut_pos, mut, n_clones, temp, box_size, n_solv,
 
     with Timing('Equilibration'):
         simulation.context.setVelocitiesToTemperature(temp)
-        simulation.step(n_steps)
+#        simulation.step(n_steps)
 
     with Timing('Serialization'):
         serialize(system, name, 'system.xml')
@@ -90,12 +92,6 @@ def parse_cmdln():
 
 if __name__ == "__main__":
     options = parse_cmdln()
-
-    try:
-        from rosetta import init
-        init()
-    except ImportError:
-        raise ImportError('You need PyRosetta to use this script.')
 
     files = iglob(options.f)
 

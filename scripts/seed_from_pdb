@@ -37,8 +37,10 @@ def run(pdb, n_clones, temp, boxsize, n_solv,
             wat_box = solvate(pdb.positions, pdb.topology, forcefield,
                               ion_content, numAdded=n_solv)
         else:
-            wat_box = solvate(pdb.positions, pdb.topology, forcefield,
-                              ion_content, boxSize=box_size)
+            wat_box = pdb
+            wat_box.topology.setPeriodicBoxVectors([[box_size[0], 0, 0], [0, box_size[0], 0], [0, 0, box_size[0]]])
+        #    wat_box = solvate(pdb.positions, pdb.topology, forcefield,
+        #                      ion_content, boxSize=box_size)
 
     minimizer, _, _ = get_sim(wat_box.positions, wat_box.topology, temp,
                               forcefield, Platform.getPlatformByName('CPU'),

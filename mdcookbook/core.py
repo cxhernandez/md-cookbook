@@ -7,15 +7,9 @@ from random import shuffle
 from mdcookbook.utils import count, randvec
 
 try:
-    from rosetta import Pose, FastRelax
-    from rosetta import hbond_lr_bb, fa_pair, fa_elec, ref, rama
-    from rosetta import pose_from_pdb, pose_from_sequence, get_fa_scorefxn
-    from toolbox import mutate_residue as mutate
-
-    TERMS = [hbond_lr_bb, fa_pair, fa_elec, ref, rama]
-
+    from pdbfixer import PDBFixer
 except ImportError:
-    FastRelax = get_fa_scorefxn = pose_from_pdb = mutate = None
+    PDBFixer = None
 
 try:
     from parmed import load_rosetta
@@ -32,6 +26,15 @@ try:
     import numpy as np
 except ImportError:
     np = None
+
+
+def mutate(pose, mut_pos, mut):
+    res = list(pose.topology.residues())[mut_pos]
+    pose.applyMutations(['%s-%s-%s' % (res.name, mut_pos + 1, mut)], res.chain.id)
+    pose.findMissingResidues()
+    pose.findMissingAtoms()
+    pose.addMissingAtoms()
+    pose.addMissingHydrogens()
 
 
 def add_caps(pose):
@@ -57,16 +60,11 @@ def model_from_pdb(pdb, mut_pos=None, mut=None, cap=False):
     """
     Models a mutant protein from an existing PDB file
     """
-    if pose_from_pdb is None:
-        raise ImportError('Could not find PyRosetta.')
-    pose = pose_from_pdb(pdb)
-    scorefxn = get_fa_scorefxn()
-    relax = FastRelax(scorefxn, 15)
+    pose = PDBFixer(pdb)
     if cap:
         pose = add_caps(pose)
     if mut_pos:
-        pose = mutate(pose, mut_pos, mut)
-    relax.apply(pose)
+        mutate(pose, mut_pos, mut)
     return pose
 
 
