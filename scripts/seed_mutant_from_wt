@@ -10,7 +10,7 @@ from glob import iglob
 import os
 
 
-from mdcookbook.core import model_from_pdb, solvate
+from mdcookbook.core import get_pose, model_from_pdb, solvate
 from mdcookbook.core import get_sim, get_ff, get_state, unpack_pose
 from mdcookbook.utils import Timing, serialize, get_args
 
@@ -35,8 +35,7 @@ def run(pdb, mut_pos, mut, n_clones, temp, box_size, n_solv,
     platform = Platform.getPlatformByName(platform)
 
     with Timing('Modeling'):
-        pose = model_from_pdb(pdb, mut_pos=mut_pos, mut=mut)
-#        positions, topology = unpack_pose(pose)
+        pose = model_from_pdb(pdb, mut_pos=mut_pos, mut=mut) 
 
     with Timing('Solvation'):
         if n_solv is not None:
@@ -52,22 +51,22 @@ def run(pdb, mut_pos, mut, n_clones, temp, box_size, n_solv,
                               forcefield, Platform.getPlatformByName('CPU'),
                               {})
 
-#    with Timing('Minimization'):
-#        minimizer.minimizeEnergy(maxIterations=max_iter)
+    with Timing('Minimization'):
+        minimizer.minimizeEnergy(maxIterations=max_iter)
 
     simulation, system, integrator = get_sim(
         minimizer.context.getState(getPositions=True).getPositions(),
         wat_box.topology, temp, forcefield, platform, props)
 
-    if not os.path.exists('./solv_pdb/'):
-        os.makedirs('./solv_pdb/')
+    if not os.path.exists('./%s/' % name):
+        os.makedirs('./%s/' % name)
 
     simulation.reporters.append(
-        PDBReporter('./solv_pdb/%s.pdb' % name, n_steps))
+        PDBReporter('./%s/equil.pdb' % name, n_steps))
 
     with Timing('Equilibration'):
         simulation.context.setVelocitiesToTemperature(temp)
-#        simulation.step(n_steps)
+        simulation.step(n_steps)
 
     with Timing('Serialization'):
         serialize(system, name, 'system.xml')
@@ -77,15 +76,20 @@ def run(pdb, mut_pos, mut, n_clones, temp, box_size, n_solv,
     print("Done!")
 
 
+def parse_muts(expr):
+    return expr.replace(' ', '').split(',')
+
+
 def parse_cmdln():
     parser = get_args()
     parser.add_argument('-f', '--input', dest='f',
                         help='Glob string to find PDB files.', required=True)
     parser.add_argument('-p', '--mut-position', dest='mut_pos',
-                        help='Position of desired mutation.', type=int,
+                        help='Position of desired mutation.', type=str,
                         required=True)
     parser.add_argument('-m', '--mutation', dest='mut',
-                        help='Rosetta residue string.', required=True)
+                        help='3-letter residue codes.', type=str,
+                        required=True)
     args = parser.parse_args()
     return args
 
@@ -95,12 +99,17 @@ if __name__ == "__main__":
 
     files = iglob(options.f)
 
+    mut_pos = list(map(int, parse_muts(options.mut_pos)))
+    mut = parse_muts(options.mut)
+    if len(mut_pos) != len(mut):
+        raise ValueError('Number of mutations should match number of mutation sites')
+
     box_size = None
     exec('box_size = %s' % options.box_size)
     if not isinstance(box_size, Vec3):
         raise TypeError('box_size must be expressed as Vec3')
 
     for f in files:
-        run(f, options.mut_pos, options.mut, options.n_clones, options.temp,
+        run(f, mut_pos, mut, options.n_clones, options.temp,
             box_size, options.n_solv, options.max_iter, options.n_steps,
             options.ion_content, options.platform, str(options.device))

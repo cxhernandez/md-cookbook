@@ -29,8 +29,9 @@ except ImportError:
 
 
 def mutate(pose, mut_pos, mut):
-    res = list(pose.topology.residues())[mut_pos]
-    pose.applyMutations(['%s-%s-%s' % (res.name, mut_pos + 1, mut)], res.chain.id)
+    res = list(list(pose.topology.residues())[mp] for mp in mut_pos)
+    pose.applyMutations(['%s-%s-%s' % (r.name, mp + 1, m)
+                         for r, m, mp in zip(res, mut, mut_pos)], res[0].chain.id)
     pose.findMissingResidues()
     pose.findMissingAtoms()
     pose.addMissingAtoms()
@@ -56,16 +57,24 @@ def add_caps(pose):
                   '%s[%s_p:C_methylamidated]' % (last_rsym, last_rname))
 
 
-def model_from_pdb(pdb, mut_pos=None, mut=None, cap=False):
-    """
-    Models a mutant protein from an existing PDB file
-    """
-    pose = PDBFixer(pdb)
+def get_pose(pdb):
+    return PDBFixer(pdb) 
+
+
+def model_from_pose(pose, mut_pos=None, mut=None, cap=False):
     if cap:
         pose = add_caps(pose)
     if mut_pos:
         mutate(pose, mut_pos, mut)
     return pose
+
+
+def model_from_pdb(pdb, mut_pos=None, mut=None, cap=False):
+    """
+    Models a mutant protein from an existing PDB file
+    """
+    pose = get_pose(pdb)
+    return model_from_pose(pose, mut_pos=mut_pos, mut=mut, cap=cap)
 
 
 def model_from_seq(seq, cap=True):
